@@ -44,21 +44,6 @@ print(P_user_pos)
 
 And so, the probability that our randomly chosen cyclist who returned a positive is a cheater is only `r round(P_user_pos, 2)` and so it is far, far more likely that they did not cheat and take EPO.
 
-## The Monty Hall Problem
-
-Where is the sweet?
-
-Initially probability is equally likely under each cup $\text{Sweet}_1 = \text{Sweet}_2 = \text{Sweet}_3 = 1/3$.
-
-Upon the player choosing cup 1, the host adds information to the system by opening one of the empty cups.
-
-What if the sweet is under cup 1 ($\text{Sweet}_1$)? 
-$$P(\text{Host}_3|\text{Sweet}_1, \text{Choose}_1) = \frac{1}{2}$$
-What if the sweet is under cup 2 ($\text{Sweet}_2$)? 
-$$P(\text{Host}_3|\text{Sweet}_2, \text{Choose}_1) = 1$$
-What if the sweet is under cup 3 ($\text{Sweet}_3$)?
-$$P(\text{Host}_3|\text{Sweet}_3, \text{Choose}_1) = 0$$
-
 
 ## What is Bayesian statistics?
 
