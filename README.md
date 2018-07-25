@@ -70,7 +70,7 @@ assignInNamespace("version_info", c(devtools:::version_info,
 
 If you run into any other problems please drop me an email at  <a.jackson@tcd.ie> although I am travelling from Thursday!
 
-## Timetable
+## Timetable (proposed and likely flexible)
 
 - 10:00 - 11:30 Introduction to Bayes Theorem and Bayesian Inference
 - 11:30 - 12:30 Fitting our first Bayesian models
