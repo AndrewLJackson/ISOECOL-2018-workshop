@@ -22,11 +22,13 @@ Now install all the packages required for the course by entering the following c
 
 ```{r,eval=FALSE}
 install.packages(c('rjags', 'compositions', 'devtools', 
-'tidyverse', 'vegan', 'ellipse', 
-'simmr', 'SIBER', 'MixSIAR'))
+                   'tidyverse', 'vegan', 'ellipse', 
+                   'simmr', 'SIBER', 'MixSIAR'))
 
-# our package `siar` is pretty out of date these days, but its useful for quick examples.
-# Unfortunately it no longer installs from CRAN and instaed we have to build it from the raw source code from github.
+# our package `siar` is pretty out of date these days, 
+# but its useful for quick examples.
+# Unfortunately it no longer installs from CRAN and instead 
+# we have to build it from the raw source code from github.
 
 devtools::install_github("andrewljackson/siar") 
 
@@ -52,7 +54,10 @@ Here are some common problems with solutions:
   - If you are trying to install Rtools with R 3.5.0 and are getting an error message about incompatibility of Rtools, run the command:
 ```{r}
 library(devtools)
-assignInNamespace("version_info", c(devtools:::version_info, list("3.5" = list(version_min = "3.3.0", version_max = "99.99.99", path = "bin"))), "devtools")
+assignInNamespace("version_info", c(devtools:::version_info, 
+                  list("3.5" = list(version_min = "3.3.0", 
+                  version_max = "99.99.99", path = "bin"))), 
+                  "devtools")
 ```
   Then try the `install_github` command again.
   
