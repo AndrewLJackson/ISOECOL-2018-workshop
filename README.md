@@ -72,9 +72,9 @@ If you run into any other problems please drop me an email at  <a.jackson@tcd.ie
 
 ## Timetable
 
-10:00 - 11:30 Introduction to Bayes Theorem and Bayesian Inference
-11:30 - 12:30 Building our first Bayesian regression models
-12:30 - 14:00 Lunch
-14:00 - 15:00 Building more complicated regression models
-15:00 - 16:00 Reporting output from Bayesian models
+- 10:00 - 11:30 Introduction to Bayes Theorem and Bayesian Inference
+- 11:30 - 12:30 Fitting our first Bayesian models
+- 12:30 - 14:00 Lunch
+- 14:00 - 15:00 Building more complicated regression models
+- 15:00 - 16:00 Reporting output from Bayesian models
 
