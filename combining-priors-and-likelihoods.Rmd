@@ -1,0 +1,142 @@
+---
+title: "Combining priors and likelihoods to get posteriors"
+output: html_document
+# editor_options: 
+#   chunk_output_type: inline
+---
+
+This example follows from the lecture "Introduction to Bayesian Statistics" from this morning, and provides some code you can use to play with how the posterior is a balance between the prior, the data and the likelihood.
+
+In this simple example, we will generate some data, and fit a normal distribution to it using an approximation to Bayes theorem. The reason I say approximation is that we can't calculate that annoying term $p(x)$ which is the probability of the data, and so we have to work with the assumption that the $\mbox{posterior} \propto \mbox{likelihood} \times \mbox{prior}$.
+
+First lets generate some simple data. We can start by generating some normally distributed random numbers, which will match well with the model we will fit that will use the normal distribution as a likelihood. Of course, one might break this assumption if one wanted to test how robust one's choice of likelihood is given the "true" population distribution for the data.
+
+To start, lets use the same example as this morning where we have obtained on a single new data point, and we want to use this to update our previously obtained prior.
+
+```{r generate-some-data}
+
+# sample size
+n <- 1
+
+# true population mean
+pop.mu <- 3.1
+
+# true population standard deviation
+pop.s <- 0.8
+
+# generate our random numbers
+x <- rnorm(n, pop.mu, pop.s)
+
+# here im going to print our numbers to screen 
+# which is fine because we only have 10 of them, 
+# but if you had more you might want to plot them
+# perhaps as a histogram or boxplot, or scatterplot.
+print(x)
+
+#hist(x)
+
+```
+
+With our data in hand, we can now calculate the probability of our data for a range of possible parameter values. To make this example more tractable, we will assume that we know the population standard deviation but we dont know the mean. This assumption turns our excercise into a univariate optimisation problem, but it is entirely possible to evaluate the posterior probability over two or more unknown parameters: it just gets a bit more awkward both implementing the code, but also visualising the results. Estimating across multiple parameters is one reason why turning to the iterative MCMC algorithm is helpful since it takes care of this problem inherently.
+
+In the code below, I am calling our unknown parameter, which is $\mu$ in this case, $\theta$ which is the common generic term for the vector of all unknown parameters.
+
+*N.B. if you change the simluated data x above drammatically or the prior, you will need to consider changing the range over which we are estimating theta to encompass this range sufficiently. Alternatively you could just make this range very large, and then truncate the plot accordingly.*
+
+We need to define the range of theta values we want to evaluate over, and also specify the parameters of our prior distribution before we can calculate our posterior.
+
+```{r theta-and-prior}
+
+# define a range of possible theta value either side of our data
+theta <- seq(-10, 10, length = 500)
+
+# parameters of the prior distribution of the mean... 
+# N.B. this is the mean and sd of the mean we are estimating,
+# The sd is not the sd of the data!!!!
+prior_theta_mu <- 2.3
+prior_theta_s  <- 0.5
+
+```
+
+
+```{r}
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# now calculate the likelihood of each of these theta values
+# given our data by looping over our values of theta
+
+# set up a vector in which to store our likelihoods
+likelihood <- numeric(length(theta))
+
+# loop over theta
+for (i in 1:length(theta)) {
+  likelihood[i] <- sum(dnorm(x, mean = theta[i], sd = pop.s))
+}
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+# now specify our prior distribution as a normal distribution
+# with defined mean and standard deviation
+prior = dnorm(theta, mean = prior_theta_mu, sd = prior_theta_s)
+
+# with these two pieces of information we can estimate our posterior
+# or at least the proportional approximation to it.
+posterior <- prior * likelihood
+
+```
+
+Now we can plot this information, and we can go back and start to explore how our posterior is affected by the quantity and distribution of our data, the choice of likelihood and importantly our choice of prior.
+
+```{r visualise-distros, fig.width=10}
+
+# Set some graphical parameters to tidy up the size of the margins
+# and layout of the axes labels and axes ticks.
+# mar = ... defines how many lines are in each of the plot margins
+# mgp = ... determines which line the axes titles, 
+#           labels and lines are drawn
+# tck = ... determines direction and length of axis tick marks
+# lax = ... rotates the y-axis tick labels 90 degrees.
+par(mar = c(5,5,2,1), mgp = c(4,1,0), tck = -.01, las = 1)
+
+# plot the likelihood of the data, scaled by its sum which makes 
+# it a probability distribution.. Here i am scaling the 
+# y axis limit of the plot to be the max of the values 
+# we are plotting.
+plot( (likelihood / sum(likelihood) ) ~ theta, 
+     type = 'l', 
+     ylab = 'Probability', 
+     ylim = c(0, 1.1 * max(c(posterior/sum(posterior), 
+                             prior/sum(prior), 
+                             likelihood/sum(likelihood)))), 
+     xlim = c(0, 7),
+     xlab = 'theta', 
+     cex.axis = 1.2, 
+     cex.lab = 1.2)
+
+# add the prior distribution, similarly scaled, as a red line
+lines( (prior / sum(prior)) ~ theta, col = 'red')
+
+# add the posterior, similarly scaled, as a blue line
+lines( (posterior / sum(posterior)) ~ theta, col = 'blue')
+
+# add a figure legend
+legend('topright', 
+       legend = c('Likelihood','Prior','Posterior'),
+       col = c('black','red','blue'),
+       lty = 1)
+
+# rescale the posterior so it is a true probability distrubution
+# that sums to one.
+true_post <- posterior/sum(posterior)
+
+```
+
+## Tasks
+The assumptions that go into any Bayesian model are: the prior distribution on the estimated parameters and the choice of likelihood function for the data. As with all models, the key ingredient then is the data!
+
+- Try adjusting the choice of prior distribution and see how if affects the posterior distribution.
+- In light of the resulting behaviour when you change the prior, increase the sample size and again test how the balance between the influence of the data and the prior is affected, even by wildly incompatible priors.
+- If you have time and are inclined, you could try breaking the inherent match between the distribution of the data and the likelihood function. You could acheive this in one of two ways: change the distribution used to generate the data in the first place; or change the distribution used in the likelihood calculation step.
+- If you want a challenge, you could try to adapt the code to optimise over both the mean and the standard deviation, treating them both as unknown parameters. In doing so, you will need to specify a prior distribution for the standard deviation (one common option is a broad uniform distution $s \sim \text{dUnif}(0, 100)$)

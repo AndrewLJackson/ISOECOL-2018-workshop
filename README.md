@@ -21,17 +21,14 @@ Install the following using the corresponding links and *make sure you have the 
 Now install all the packages required for the course by entering the following code in to R
 
 ```{r,eval=FALSE}
-install.packages(c('rjags', 'compositions', 'devtools', 'tidyverse', 'vegan', 'ellipse', 'simmr', 'SIBER', 'MixSIAR'))
-
-library(rjags)
-library(compositions)
-library(devtools) 
-library(tidyverse)
+install.packages(c('rjags', 'compositions', 'devtools', 
+'tidyverse', 'vegan', 'ellipse', 
+'simmr', 'SIBER', 'MixSIAR'))
 
 # our package `siar` is pretty out of date these days, but its useful for quick examples.
 # Unfortunately it no longer installs from CRAN and instaed we have to build it from the raw source code from github.
 
-install_github("andrewljackson/siar") 
+devtools::install_github("andrewljackson/siar") 
 
 # It is often worth checking from time to time that our packages
 # are up to date.

@@ -16,6 +16,12 @@ $$P(A|B) = \frac{P(B|A) P(A)}{P(B)}$$
 
 <center><img src="Thomas_Bayes.gif" width=40%/></center>
 
+## Bayes theorem lets us flip probabilities
+
+We can use Bayes theorem to calculate the probability of one outcome conditional on another. For example, based on new information that we have obtained.
+
+$$P(\text{rain}|\text{rain_forecast}) = \frac{P(\text{rain_forecast} | \text{rain}) P(\text{rain})}{P(\text{rain_forecast})}$$
+
 ## Bayes Theorem in practice
 
 Beware random drugs tests! I like cycling, and lots of tests for EPO are conducted. Some urine [tests for micro-dosing](https://www.ncbi.nlm.nih.gov/pubmed/24190107) have a sensitivity (true positive) probability of 0.875 and a specificity (true negatives) of 0.98. Lets be generous and say a the proportion of cheaters is 0.005.
@@ -27,6 +33,10 @@ $$P(User|+) = \frac{P(+|User) P(User)}{P(+)}$$
 ## Expanded EPO calculuations
 
 $$P(\text{User}|+) = \frac{P(+|\text{User}) P(\text{User})}{P(+|\text{User})P(\text{User}) + P(+|\text{Non-user})P(\text{Non-user})}$$
+
+- $P(+|\text{User}) = 0.875$  These are the true positives
+- $P(-|\text{Non-user} = 0.98)$ These are the true Negatives
+- $P(\text{User}) = 0.005$ The proportion of users in the population
 
 ## EPO calculations in R
 
@@ -44,6 +54,10 @@ print(P_user_pos)
 
 And so, the probability that our randomly chosen cyclist who returned a positive is a cheater is only `r round(P_user_pos, 2)` and so it is far, far more likely that they did not cheat and take EPO.
 
+## Questions
+
++ what is the effect of increasing sensitivity and/or specificity?
++ what is the effect of changing the proportion of cheats / users in the population?
 
 ## What is Bayesian statistics?
 
@@ -69,11 +83,20 @@ In a Bayesian model, every item of interest is either data (which we will write 
 Bayes' equation is usually written mathematically as:
 $$p(\theta|x) \propto p(x|\theta) \times p(\theta)$$
 or, more fully:
-$$p(\theta|x) = \frac{p(x|\theta) \times p(\theta)}{p(x)}$$
+$$p(\theta|x) = \frac{p(x|\theta) \times p(\theta)}{p(x)} = P(A|B) = \frac{P(B|A) P(A)}{P(B)}$$
 
 - The _posterior_ is the probability of the parameters given the data
 - The _likelihood_ is the probability of observing the data given the parameters (unknowns)
 - The _prior_ represents external knowledge about the parameters
+
+## These parameters in more detail
+
+- $p(\theta|x)$ is the probability of a model parameter(s) given some data $x$.
+- $p(x|\theta)$ is the probability of the data given a paremeter and is obtained from the likelihood function for a specified probability distribution.
+- $p(\theta)$ is the probability of our model parameter(s) across their full range, i.e. our prior.
+- $p(x)$ is the probability of our data, and is the mathematically difficult (impossible) one to calculate!
+
+
 
 
 ## A simple example
