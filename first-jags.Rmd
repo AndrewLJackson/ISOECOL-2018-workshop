@@ -1,0 +1,13 @@
+---
+title: "First JAGS models"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+This short example follows on from this morning's example where we were exploring how the prior and likelihood combine to generate the posterior. We will now turn to using JAGS as a way to fit the same model. In doing so, it makes it straight forward to estimating multiple parameters simultaneously. We can also use this simple example to understand the process a bit more, and explore important points such as model convergence which becomes more important as the complexity of the models increases: anyone who has used MixSIAR will know this only too well... depending on what you are tyring to do, it is potentially a beast of a model.
+
+
+
+
+

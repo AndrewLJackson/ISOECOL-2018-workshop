@@ -1,8 +1,8 @@
 ---
 title: "Combining priors and likelihoods to get posteriors"
 output: html_document
-# editor_options: 
-#   chunk_output_type: inline
+editor_options:
+  chunk_output_type: inline
 ---
 
 This example follows from the lecture "Introduction to Bayesian Statistics" from this morning, and provides some code you can use to play with how the posterior is a balance between the prior, the data and the likelihood.
