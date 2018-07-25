@@ -1,6 +1,6 @@
 # ISOECOL-2018-workshop
 
-This repository contains a collection of presentations and vignettes written in .*Rmarkdown format for my workshop on Bayesian Statistics for Ecologists running before ISOECOL 2018 in Vina del Mar, Chile on Saturday 28 July.
+This repository contains a collection of presentations and vignettes written in .*Rmarkdown format for my workshop on Bayesian Statistics for Ecologists running before ISOECOL 2018 in Vina del Mar, Chile on Saturday 28 July. Much of the content here was written by my collaborator and real statistician Andrew Parnell, University of Maynooth, Ireland.
 
 In preparation for the course please install the following, preferably in the below suggested order. Make sure you run these before you arrive in case of poor (or crowded!) internet.
 
@@ -30,10 +30,12 @@ library(tidyverse)
 
 # our package `siar` is pretty out of date these days, but its useful for quick examples.
 # Unfortunately it no longer installs from CRAN and instaed we have to build it from the raw source code from github.
+
 install_github("andrewljackson/siar") 
-library(siar)
 
-
+# It is often worth checking from time to time that our packages
+# are up to date.
+update.packages(ask = FALSE)
 
 ```
 
@@ -64,4 +66,13 @@ assignInNamespace("version_info", c(devtools:::version_info, list("3.5" = list(v
   - If you get some errors about `pandoc` when installing simmr leave out the `build_vignettes=TRUE` argument
 
 
-If you run into any other problems please drop us a line at <andrew.parnell@ucd.ie> (for SIAR/simmr/MixSIAR queries) or <a.jackson@tcd.ie> (for SIBER/SIDER queries).
+If you run into any other problems please drop me an email at  <a.jackson@tcd.ie> although I am travelling from Thursday!
+
+## Timetable
+
+10:00 - 11:30 Introduction to Bayes Theorem and Bayesian Inference
+11:30 - 12:30 Building our first Bayesian regression models
+12:30 - 14:00 Lunch
+14:00 - 15:00 Building more complicated regression models
+15:00 - 16:00 Reporting output from Bayesian models
+
