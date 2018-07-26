@@ -72,9 +72,9 @@ If you run into any other problems please drop me an email at  <a.jackson@tcd.ie
 
 ## Timetable (proposed and likely flexible)
 
-- 10:00 - 11:30 Introduction to Bayes Theorem and Bayesian Inference
-- 11:30 - 12:30 Fitting our first Bayesian models
+- 10:00 - 11:30 Introduction to Bayes Theorem and Bayesian Inference (intro_bayes.Rmd)
+- 11:30 - 12:30 Fitting our first Bayesian models (*combining-priors-and-likelihoods.Rmd* & *first-jags.Rmd*)
 - 12:30 - 14:00 Lunch
-- 14:00 - 15:00 Building more complicated regression models
-- 15:00 - 16:00 Reporting output from Bayesian models
+- 14:00 - 15:00 Building more complicated regression models (*regression-in-jags.Rmd* &  *basic-simm-jags.Rmd* & if you are more comfortable or quicker at this you might move on to *glmm_in_jags.Rmd* which illustrates how to include a random effect)
+- 15:00 - 16:00 Reporting output from Bayesian models (more of a discussion session, but i suspect we will run over from the previous session and we can work together through some examples from mixing models or SIBER type analyeses as a class)
 
