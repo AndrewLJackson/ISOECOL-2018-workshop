@@ -140,6 +140,7 @@ summary(output)
 **TASKS:**
 
 - plot and calculate the correlation between the posterior estimates of $p_1$ and $p_2$
-- try adding in the TDFs (corrections): `data(correctionsdemo)` will load it, and then you need to extract the correct entries as we did above for the sources.
-- You could try playing around with how the number of consumer data points we have affects the posterior, and how, as earlier this morning, this will be balanced against the prior. For example: in the code above around line 30, `consumers <- geese1demo[1:3, 2]` would extract only the first 3 data points. 
+- try adding in the TDFs (corrections): `data(correctionsdemo)` will load it, and then you need to extract the correct entries as we did above for the sources. Alternatively, you could simply subtract some number off all the consumer data in order to shift them more into the centre of the two sources in order to explore other geometries.
+- You could try playing around with how the number of consumer data points we have affects the posterior, and how, as earlier this morning, this will be balanced against the prior. For example: in the code above around line 30, `consumers <- geese1demo[1:3, 2]` would extract only the first 3 data points.
+- This sample size issue is one reason why somewhat complex MixSIAR models are really powerful, as by using random effects to model individuals nested within groups etc... we are able to model all our data in one go and to borrow strength from other groups, with appropriate weighting, in order to increase the certainy (or at least more honestly account for it) of our estimated parameters rather than breaking our data up in to small, more manageable, but less powerful chunks.
 
