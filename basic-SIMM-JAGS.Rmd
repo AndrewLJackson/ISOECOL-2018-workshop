@@ -81,6 +81,9 @@ For simplicity we will use the first approach of the uniform distribution on $p_
 
 ```{r JAGS-simm}
 
+# load rjags
+library(rjags)
+
 # write out our JAGS model
 modelstring ='
 model {
@@ -131,7 +134,7 @@ output <- coda.samples(model = model,
 gelman.diag(output, multivariate = FALSE)
 
 # plot the results
-plot(output)
+plot(output, smooth = FALSE)
 
 # summary of the parameters
 summary(output)
