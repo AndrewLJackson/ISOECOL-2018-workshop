@@ -1,0 +1,145 @@
+---
+title: "basic-SIMM-JAGS"
+author: "Andrew L Jackson"
+date: "26/7/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this script will we build and fit a very basic Stable Isotope Mixing Model in JAGS.
+
+The example we will use is the goose example from SIAR. We will take some liberties though and make it simpler for us and use only the $\delta^{13}\text{C}$ data and restrict ourselves to the two main sources only: terrestrial grass and the marine grass zostera. We are also going to ignore (for now.. you can add them in!) the trophic discrmination factors (the corrections in siar terminology).
+
+## Plotting the data
+
+Load the siar library
+```{r load-siar}
+library(siar)
+```
+
+Load in the data for the single group of geese (the consumers) and the sources data. We also strip out only the data we need from these matrices.
+
+```{r process-an-plot-data}
+# Load in the data
+data(geese1demo); data(sourcesdemo)
+
+# extract only the d13C data for the consumers
+consumers <- geese1demo[,2]
+
+# extract only the d13C data for grass and zostera
+sources <- sourcesdemo[1:2,4:5]
+
+# create a vector to represent the probability
+# densities of the sources
+con_grid <- seq(-35,-5,length=100)
+
+# plot these densities for Grass in green
+plot(con_grid, dnorm(con_grid,
+                    mean = sources[2,1],
+                    sd = sources[2,2]),
+     type = 'l', col = 'red', 
+     xlab = 'd13C', ylab = 'Probability density')
+
+# Add Zostera to the plot in blue
+lines(con_grid, dnorm(con_grid, 
+                      mean = sources[1,1], 
+                      sd = sources[1,2]),
+      col='blue')
+
+# add the consumer data as points on the x axis
+points(consumers,rep(0,9))
+
+# add a legend
+legend('topright',legend=c('Grass','Zostera','Consumers'),
+       lty=c(1,1,-1),pch=c(-1,-1,1),col=c('red','blue','black'))
+```
+
+
+## A first model for this simple SIMM
+
+- Let $y_i$ be the $\delta^{13}$C value for individual $i$, $i=1,\ldots,9$
+- Let $s_k$ be the source value for source $k$, $k=1,2$
+- Let $p_k$ be the dietary proportion for source $k$
+
+The likelihood can now be written as:
+$$ y_i = p_1 \times s_1 + p_2 \times s_2 + \epsilon_i \$$
+
+which in terms of distributions, and thinking about JAGS looks like
+
+$$y_i \sim N\left(\sum_{k=1}^2 p_ks_k,\sigma^2\right)$$
+
+so just like a regression model with a slightly different mean!
+
+$\epsilon_i \sim N(0,\sigma^2)$ as usual, though including this term is (strangely) controversial
+
+The "trick" to this SIMM compared with a regular regression model is that the two proportoins must sum to one: $p_1 + p_2 = 1$. There are lots of different ways in which one might specify priors on these, and in one dimension as we have here we have the choice of making of them be a uniform random number between 0 and 1, say $p_1 \sim \text{dUnif}(0,1)$ and then specifying the other as being $p_2 = 1-p_1$. The other approach we could take is to make $p_1 \sim \text{dBeta}(0,1)$ and similary specify $p_2 = 1-p_1$ which gives more flexibility to the shape of the prior distribution: noting that the uniform distribution is a special case of the beta distribution. Once we move into higher dimensions with more proportions, it becomes necessary to either use something like the dirichlet distribution as is the case in SIAR and MixSIR, or we can use a transformation to linearise the proportions such as ILR or CLR or ALR transformations as is the case in MixSIAR (and I think simmr too).
+
+For simplicity we will use the first approach of the uniform distribution on $p_1$.
+
+```{r JAGS-simm}
+
+# write out our JAGS model
+modelstring ='
+model {
+
+  # The likelihood
+  for(i in 1:N) { 
+    y[i] ~ dnorm( (p_1 * s_1) + (p_2 * s_2), sigma^-2) 
+  }
+
+  # --------------------------------------
+  # the priors 
+
+  # p_1 is uniform distributed and p_2 = 1 - p_1
+  p_1 ~ dunif(0,1)
+  p_2 <- 1-p_1
+
+  # The sources are treated as priors, with means 
+  # specified as data coming in to the model from the 
+  # sources object above.
+  s_1 ~ dnorm(s_1_mean,s_1_sd^-2)
+  s_2 ~ dnorm(s_2_mean,s_2_sd^-2)
+
+  # And finally we have our residual error term.
+  sigma ~ dunif(0,10)
+}
+'
+
+# bundle our data into a list
+data <- list(y = consumers,
+             s_1_mean = sources[1,1],
+             s_1_sd   = sources[1,2],
+             s_2_mean = sources[2,1],
+             s_2_sd   = sources[2,2],
+             N = length(consumers))
+
+# set up the jags model
+model <- jags.model(textConnection(modelstring), 
+                    data = data, n.chains = 3)
+
+output <- coda.samples(model = model,
+                       variable.names = c("p_1","p_2"),
+                       n.iter = 10000)
+
+# NB because of the strict correlation between 
+# p_1 and p_2, the gelman statistic for convergence
+# will fail if we use the default 
+# option multivariate = TRUE.
+gelman.diag(output, multivariate = FALSE)
+
+# plot the results
+plot(output)
+
+# summary of the parameters
+summary(output)
+```
+
+**TASKS:**
+
+- plot and calculate the correlation between the posterior estimates of $p_1$ and $p_2$
+- try adding in the TDFs (corrections): `data(correctionsdemo)` will load it, and then you need to extract the correct entries as we did above for the sources.
+- You could try playing around with how the number of consumer data points we have affects the posterior, and how, as earlier this morning, this will be balanced against the prior. For example: in the code above around line 30, `consumers <- geese1demo[1:3, 2]` would extract only the first 3 data points. 
+
