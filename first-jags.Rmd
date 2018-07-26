@@ -5,9 +5,221 @@ editor_options:
   chunk_output_type: inline
 ---
 
-This short example follows on from this morning's example where we were exploring how the prior and likelihood combine to generate the posterior. We will now turn to using JAGS as a way to fit the same model. In doing so, it makes it straight forward to estimating multiple parameters simultaneously. We can also use this simple example to understand the process a bit more, and explore important points such as model convergence which becomes more important as the complexity of the models increases: anyone who has used MixSIAR will know this only too well... depending on what you are tyring to do, it is potentially a beast of a model.
+This short example follows on from this morning's example where we were exploring how the prior and likelihood combine to generate the posterior. We will now turn to using JAGS as a way to fit the same model. In doing so, it makes it straight forward to estimate multiple parameters simultaneously. We can also use this simple example to understand the process a bit more, and explore important points such as model convergence which becomes more important as the complexity of the models increases: anyone who has used MixSIAR will know this only too well... depending on what you are tyring to do, it is potentially a beast of a model.
+
+## Recreate our simple model
+
+Earlier, we fitted a very simple model where we estimated only the mean of our data, assuming we knew the standard deviation exactly. We can recreate this using JAGS, which is similar in appearance to R code, but it *is not* compatible with R, nor is it ever inpreted by R, and rather it is passed to the underlying JAGS software installed on your computer for evaluation. 
+
+The JAGS model is written as plain text, and it is either written to a `*.txt` file and passed to JAGS via the R package `rjags`, or you can write it out in-line in your R code as a string, and pass it as a text object using the function `textConnection()`. We will use the latter approach here as our models are relatively short and it is easier to view them in our R code.
+
+A JAGS model consists of two key components: A section defining the Likelihood, and then a section that defines the Prior distribution for all the unknown parameters that we want to estimate. You dont have to explicitly label these as such, but it is helpful, and it doesnt matter which order you put them in the model code, but again it probably helps to define the likelihood first and the priors second. Beyond simple cases, it sometimes gets confusing as to what is part of the likelihood and what is part of the prior, but that comes with experience.
+
+*__N.B.__* JAGS uses the precision ($\tau$) notation rather than standard deviation ($\sigma$) or variance ($ \sigma^2$) , so remember that:
+$$\sigma^2 = \frac{1}{\tau}$$
+and
+$$\tau = \frac{1}{\sigma^2} = \sigma^{-2}$$
+
+```{r simple-model}
+library(rjags)
+
+# we define our JAGS model as a string of text between two
+# inverted commas (either single or double is fine)
+modelstring <- '
+  model {
+
+    # Define the Likelihood of the data
+    # normally distributed with known standard deviation.
+    x ~ dnorm(theta, 0.8^-2)
+
+    # Define the Prior for all unknown parameters
+    theta ~ dnorm(2.3, 0.5^-2)
+  }
+'
+# Set up data which is passed in to the JAGS model
+# as a list, with vectors and matrices the same name
+# as appear in the JAGS model.
+data <- list(x = 3.1)
+
+# The jags model is initialised using jags.model()
+model <- jags.model(textConnection(modelstring), data = data)
+
+# We then use coda.samples to ask for posterior draws
+# which we will use as a reflectin of the posterior.
+output <- coda.samples(model = model, 
+                       variable.names = c("theta"), 
+                       n.iter = 1000)
+# Plot output
+plot(density(output[[1]]))
+```
+
+And so we get results compatible with our expectation from our earlier excercise, we could confirm by making sure we use exactly the same data and priors.
+
+## Checking model convergence
+
+The iterative process of the MCMC algorithm that underlies JAGS means that we will never get exactly the same posterior distribution if we run the model more than once (except if we set the random number generator seed each time). The algorithm also has to start with an initial guess for the parameters, which if wildly incompatible with the posterior, may take several iterations for it to walk its way to more sensible values. For these reasons, we typically want to run our model more than once, in multiple chains, to assess convergence.
+
+We can run our model again, this time asking for multiple chains: typically three is sufficient. Since we already have our model defined, we can set up the model and samples from it again.
+
+```{r check-convergence}
+
+# set up a new model with 3 chains
+# The jags model is initialised using jags.model()
+model <- jags.model(textConnection(modelstring), data = data, 
+                    n.chains = 3)
+
+# We then use coda.samples to ask for posterior draws
+# which we will use as a reflectin of the posterior.
+output <- coda.samples(model = model, 
+                       variable.names = c("theta"), 
+                       n.iter = 1000)
+# Plot output
+# Passing the entire object we called output to plot()
+# will automatically create a set of trace and density plots
+plot(output)
 
 
+```
 
+We can manually set the initial starting values for the guess at theta to be far apart and outside where we would expect. This forces us to be certain that the model has converged. For this example we will run it with only a short run so we can more easily see the trace plot.
+
+```{r check-convergence-far-inits}
+
+# set up a new model with 3 chains
+# The jags model is initialised using jags.model()
+model <- jags.model(textConnection(modelstring), data = data, 
+                    n.chains = 3,
+                    inits = list(list(-100),
+                                 list(10),
+                                 list(100)))
+
+# We then use coda.samples to ask for posterior draws
+# which we will use as a reflectin of the posterior.
+output <- coda.samples(model = model, 
+                       variable.names = c("theta"), 
+                       n.iter = 10)
+# Plot output
+# Passing the entire object we called output to plot()
+# will automatically create a set of trace and density plots
+plot(output, smooth = FALSE)
+
+
+```
+
+**TASK:** run the model above for longer, and convince yourself that the model has converged. A useful test for convergence is the Brooks Gelman Ratio test using the fuction `coda::gelman.diag()` on our output (more info at this [useful blog](https://theoreticalecology.wordpress.com/2011/12/09/mcmc-chain-analysis-and-convergence-diagnostics-with-coda-in-r/). We are looking for values of the upper limit to be close to 1: this is clearly not the case for the above example which only uses 10 iterations per chain. There is also the function `coda::gelman.plot()` which helpfully shows how this BGR statistic shrinks as the number of iterations is increased along the chains.
+
+More information on model checking and convergence diagnostics is available form Andrew Parnell's script [reg_and_simms](https://cdn.rawgit.com/andrewcparnell/simms_course/9f772e8a/ap_notes/reg_and_simms/reg_and_simms.pdf).
+
+
+## Estimating both the mean and the standard devation
+
+```{r mean-and-sd}
+modelstring ='
+  model {
+    
+    # Likelihood
+    for(i in 1:n) { 
+                   x[i] ~ dnorm(theta,sd^-2) 
+                   }
+
+    # -------------------------------------------------------
+
+    # Priors on both theta and sd
+    # Note that for both, I am passing the parametrs of these
+    # prior distributions in as data, which makes it 
+    # easier for us to change them in the R code.
+    
+    theta ~ dnorm(prior.mu.theta, prior.sd.theta^-2)
+    
+    sd ~ dunif(prior.sd.min, prior.sd.max)
+  }
+'
+# Set up data which includes the parameters governing the 
+# priors.
+data <- list(x = c(3.1,2.7,4.2,3.6), 
+             n = 4,
+             prior.mu.theta = 2.3,
+             prior.sd.theta = 0.5,
+             prior.sd.min = 0,
+             prior.sd.max = 100)
+
+# Set up and run jags
+
+model <- jags.model(textConnection(modelstring), 
+                    data = data, 
+                    n.chains = 3)
+
+output <- coda.samples(model = model,
+                       variable.names = c("theta","sd"), 
+                       n.iter = 1000)
+
+plot(output, smooth = FALSE)
+
+gelman.plot(output)
+
+gelman.diag(output)
+
+```
+
+## Fitting a linear regression model using JAGS
+
+Fitting a linear regression model is similarly straight forward.
+
+We can set up some simple data to try it on.
+
+```{r example-reg-data}
+
+x <- c(18.07, 52.59, 54.93, 79.31, 89.58)
+
+y <- c(7.89, 12.41, 13.34, 19.3, 19.52)
+
+plot(y ~ x,
+     xlab = 'Percentage of food source in diet (x)',
+     ylab = 'Weight (y)',
+     las = 1)
+
+abline(glm(y~x), col='red')
+```
+
+Then, as before, we define our JAGS model and pass it the data
+```{r,results='hide'}
+modelstring ='
+model {
+
+  # Define the Likelihood
+  for(i in 1:N) { 
+    y[i] ~ dnorm(alpha + beta*x[i], sigma^-2) 
+  }
+
+  # -------------------------------------------
+  # Prior distributions on our three parameters
+  alpha ~ dnorm(0,100^-2) # Note: vague priors
+  beta ~ dnorm(0,100^-2)
+  sigma ~ dunif(0,100)
+}
+'
+
+# bundle the data into a list for passing to rjags
+data <- list(x = x,
+             y = y,
+             N = 5)
+
+# set up the model
+model <- jags.model(textConnection(modelstring), 
+                    data= data, 
+                    n.chains = 3)
+
+# evaluate the model
+output <- coda.samples(model = model,
+                       variable.names = c("alpha", "beta"),
+                       n.iter = 10000)
+```
+
+**TASK:** 
+
+- check the model output for consistency with a linear model fitting using glm() and satisfy yourself that the slope and intercept are comparable. 
+- Check for convergence.
+- Explore the correlation between the slope and intercept. Would you a priori expec them to be correlated in some way? The best way to do this is to plot the posterior draws for the slope against the intercept, and run a correlation test using `cor.test()` on the two vectors.
+- We estimated the residual error term `sd` but we didnt monitor it. Edit the code so we can obtain the posterior samples for this parameter too.
 
 

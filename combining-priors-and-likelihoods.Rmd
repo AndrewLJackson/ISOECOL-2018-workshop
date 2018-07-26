@@ -131,7 +131,12 @@ legend('topright',
 # that sums to one.
 true_post <- posterior/sum(posterior)
 
+# our posterior mean is...
+mean(true_post)
+
 ```
+
+
 
 ## Tasks
 The assumptions that go into any Bayesian model are: the prior distribution on the estimated parameters and the choice of likelihood function for the data. As with all models, the key ingredient then is the data!
