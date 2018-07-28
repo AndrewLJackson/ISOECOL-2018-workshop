@@ -102,12 +102,12 @@ $$p(\theta|x) = \frac{p(x|\theta) \times p(\theta)}{p(x)} = P(A|B) = \frac{P(B|A
 ## A simple example
 
 - An ecologist listens for the calls of the southern brown tree frog (_Litoria ewingi_)
-- She wants to know the mean length of the calls
+- They want to know the mean length of the calls
 - We will assume that the standard deviation of the calls is known to be 0.8 seconds
-- She hears a call of length 3.1 seconds
+- They hear a call of length 3.1 seconds
 - A study conducted the previous year estimated the mean to be 2.3 seconds with standard error 0.5 seconds
 
-If we assume that the calls she hears are normally distributed then $x$ follows a normal distribution with mean $\theta$ and standard deviation 0.8s, written $x|\theta \sim N(\theta,0.8^2)$. The prior distribution is $\theta \sim N(2.3,0.5^2)$.
+If we assume that the calls they hear are normally distributed then $x$ follows a normal distribution with mean $\theta$ and standard deviation 0.8s, written $x|\theta \sim N(\theta,0.8^2)$. The prior distribution is $\theta \sim N(2.3,0.5^2)$.
 
 ## Simple example (continued) {.smaller}
 

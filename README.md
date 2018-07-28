@@ -1,5 +1,9 @@
 # ISOECOL-2018-workshop
 
+Wi-fi: Congreso-Isotopos
+
+Pass: COngr3so-2k18
+
 This repository contains a collection of presentations and vignettes written in .*Rmarkdown format for my workshop on Bayesian Statistics for Ecologists running before ISOECOL 2018 in Vina del Mar, Chile on Saturday 28 July. Much of the content here was written by my collaborator and real statistician Andrew Parnell, University of Maynooth, Ireland.
 
 In preparation for the course please install the following, preferably in the below suggested order. Make sure you run these before you arrive in case of poor (or crowded!) internet.
