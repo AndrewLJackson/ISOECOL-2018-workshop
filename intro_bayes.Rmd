@@ -1,6 +1,6 @@
 ---
 title: "Introduction to Bayesian Statistics"
-author: "Andrew Parnell, School of Mathematics and Statistics, University College Dublin"
+author: "Andrew Parnell, School of Mathematics and Statistics, National University of Maynooth, Ireland"
 output:
   ioslides_presentation:
     transition: slower

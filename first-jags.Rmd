@@ -1,7 +1,9 @@
 ---
 title: "First JAGS models"
-output: html_notebook
-editor_options: 
+output:
+  html_document:
+    df_print: paged
+editor_options:
   chunk_output_type: inline
 ---
 
@@ -89,9 +91,9 @@ We can manually set the initial starting values for the guess at theta to be far
 # The jags model is initialised using jags.model()
 model <- jags.model(textConnection(modelstring), data = data, 
                     n.chains = 3,
-                    inits = list(list(-100),
-                                 list(10),
-                                 list(100)))
+                    inits = list(list(theta = -100),
+                                 list(theta = 10),
+                                 list(theta = 100)))
 
 # We then use coda.samples to ask for posterior draws
 # which we will use as a reflectin of the posterior.
