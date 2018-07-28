@@ -20,9 +20,16 @@ y <- c(7.89, 12.41, 13.34, 19.3, 19.52)
 plot(y ~ x,
      xlab = 'Percentage of food source in diet (x)',
      ylab = 'Weight (y)',
-     las = 1)
+     las = 1,
+     xlim = c(0,100),
+     ylim = c(0, max(y)*1.1), 
+     bty = "L")
 
-abline(glm(y~x), col='red')
+m1 <- glm(y ~ x)
+
+summary(m1)
+
+abline(m1, col='red')
 ```
 
 Then, as before, we define our JAGS model and pass it the data
@@ -58,7 +65,9 @@ model <- jags.model(textConnection(modelstring),
 
 # evaluate the model
 output <- coda.samples(model = model,
-                       variable.names = c("alpha", "beta"),
+                       variable.names = c("alpha", 
+                                          "beta",
+                                          "sigma"),
                        n.iter = 10000)
 ```
 
@@ -85,6 +94,27 @@ We can also calculate that our slope is greater (or less than) zero directly, an
 p_beta_gt_zero <- sum(output[[1]][,"beta"] > 0) / length(output[[1]][,"beta"])
 
 print(p_beta_gt_zero)
+
+```
+
+## Task completion
+
+```{r plot-cor}
+
+# plot the correlation between alpha and beta 
+# for chain 1
+
+plot.default(output[[1]][, "alpha"], 
+             output[[1]][, "beta"], 
+             cex = 0.7, 
+             col= 1, 
+             pch = 19)
+
+cor.test(output[[1]][, "alpha"], 
+             output[[1]][, "beta"])
+
+
+
 
 ```
 

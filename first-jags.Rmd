@@ -67,7 +67,8 @@ We can run our model again, this time asking for multiple chains: typically thre
 
 # set up a new model with 3 chains
 # The jags model is initialised using jags.model()
-model <- jags.model(textConnection(modelstring), data = data, 
+model <- jags.model(textConnection(modelstring), 
+                    data = data, 
                     n.chains = 3)
 
 # We then use coda.samples to ask for posterior draws
@@ -99,11 +100,11 @@ model <- jags.model(textConnection(modelstring), data = data,
 # which we will use as a reflectin of the posterior.
 output <- coda.samples(model = model, 
                        variable.names = c("theta"), 
-                       n.iter = 10)
+                       n.iter = 1000)
 # Plot output
 # Passing the entire object we called output to plot()
 # will automatically create a set of trace and density plots
-plot(output, smooth = FALSE)
+plot(output, smooth = FALSE, col = c("black", "blue", "orange"), lwd = 2, lty = 1)
 
 
 ```
@@ -160,6 +161,8 @@ plot(output, smooth = FALSE)
 gelman.plot(output)
 
 gelman.diag(output)
+
+summary(output)
 
 ```
 
