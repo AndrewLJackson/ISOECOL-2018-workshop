@@ -64,8 +64,10 @@ legend('topright',legend=c('Grass','Zostera','Consumers'),
 - Let $s_k$ be the source value for source $k$, $k=1,2$
 - Let $p_k$ be the dietary proportion for source $k$
 
+
 The likelihood can now be written as:
-$$ y_i = p_1 \times s_1 + p_2 \times s_2 + \epsilon_i \$$
+
+$$ y_i = p_1 \times s_1 + p_2 \times s_2 + \epsilon_i $$
 
 which in terms of distributions, and thinking about JAGS looks like
 
@@ -90,7 +92,7 @@ model {
 
   # The likelihood
   for(i in 1:N) { 
-    y[i] ~ dnorm( (p_1 * s_1) + (p_2 * s_2), sigma^-2) 
+    y[i] ~ dnorm( (p_1 * s_1  + p_2 * s_2, sigma^-2) 
   }
 
   # --------------------------------------
@@ -146,4 +148,93 @@ summary(output)
 - try adding in the TDFs (corrections): `data(correctionsdemo)` will load it, and then you need to extract the correct entries as we did above for the sources. Alternatively, you could simply subtract some number off all the consumer data in order to shift them more into the centre of the two sources in order to explore other geometries.
 - You could try playing around with how the number of consumer data points we have affects the posterior, and how, as earlier this morning, this will be balanced against the prior. For example: in the code above around line 30, `consumers <- geese1demo[1:3, 2]` would extract only the first 3 data points.
 - This sample size issue is one reason why somewhat complex MixSIAR models are really powerful, as by using random effects to model individuals nested within groups etc... we are able to model all our data in one go and to borrow strength from other groups, with appropriate weighting, in order to increase the certainy (or at least more honestly account for it) of our estimated parameters rather than breaking our data up in to small, more manageable, but less powerful chunks.
+
+## Try a 3 source problem
+
+```{r process-an-plot-data}
+# Load in the data
+data(geese1demo); data(sourcesdemo)
+
+# extract only the d13C data for the consumers
+consumers <- geese1demo[,2]
+
+# extract only the d13C data for grass and zostera
+sources <- sourcesdemo[1:3,4:5]
+
+```
+
+```{r JAGS-simm}
+
+# load rjags
+library(rjags)
+
+# write out our JAGS model
+modelstring ='
+model {
+
+  # The likelihood
+  for(i in 1:N) { 
+    y[i] ~ dnorm( p_1 * s_1  + p_2 * s_2 + p_3 * s_3, sigma^-2) 
+  }
+
+  # --------------------------------------
+  # the priors 
+
+  pp ~ ddirch(c(1,1,1))
+  p_1 <- pp[1]
+  p_2 <- pp[2]
+  p_3 <- pp[3]
+
+  # The sources are treated as priors, with means 
+  # specified as data coming in to the model from the 
+  # sources object above.
+  s_1 ~ dnorm(s_1_mean,s_1_sd^-2)
+  s_2 ~ dnorm(s_2_mean,s_2_sd^-2)
+  s_3 ~ dnorm(s_3_mean,s_3_sd^-2)
+
+  # And finally we have our residual error term.
+  sigma ~ dunif(0,10)
+}
+'
+
+# bundle our data into a list
+data <- list(y = consumers,
+             s_1_mean = sources[1,1],
+             s_1_sd   = sources[1,2],
+             s_2_mean = sources[2,1],
+             s_2_sd   = sources[2,2],
+             s_3_mean = sources[3,1],
+             s_3_sd   = sources[3,2],
+             N = length(consumers))
+
+# set up the jags model
+model <- jags.model(textConnection(modelstring), 
+                    data = data, n.chains = 3)
+
+output <- coda.samples(model = model,
+                       variable.names = c("p_1",
+                                          "p_2", 
+                                          "p_3"),
+                       n.iter = 10000)
+
+# NB because of the strict correlation between 
+# p_1 and p_2, the gelman statistic for convergence
+# will fail if we use the default 
+# option multivariate = TRUE.
+gelman.diag(output, multivariate = FALSE)
+
+# plot the results
+plot(output, smooth = FALSE)
+
+# summary of the parameters
+summary(output)
+```
+
+```{r plot-cors}
+
+plot.default(output[[1]][,1], output[[1]][,2])
+plot.default(output[[1]][,1], output[[1]][,3])
+plot.default(output[[1]][,2], output[[1]][,3])
+```
+
 

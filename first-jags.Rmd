@@ -114,57 +114,6 @@ plot(output, smooth = FALSE, col = c("black", "blue", "orange"), lwd = 2, lty = 
 More information on model checking and convergence diagnostics is available form Andrew Parnell's script [reg_and_simms](https://cdn.rawgit.com/andrewcparnell/simms_course/9f772e8a/ap_notes/reg_and_simms/reg_and_simms.pdf).
 
 
-## Estimating both the mean and the standard devation
-
-```{r mean-and-sd}
-modelstring ='
-  model {
-    
-    # Likelihood
-    for(i in 1:n) { 
-                   x[i] ~ dnorm(theta,sd^-2) 
-                   }
-
-    # -------------------------------------------------------
-
-    # Priors on both theta and sd
-    # Note that for both, I am passing the parametrs of these
-    # prior distributions in as data, which makes it 
-    # easier for us to change them in the R code.
-    
-    theta ~ dnorm(prior.mu.theta, prior.sd.theta^-2)
-    
-    sd ~ dunif(prior.sd.min, prior.sd.max)
-  }
-'
-# Set up data which includes the parameters governing the 
-# priors.
-data <- list(x = c(3.1,2.7,4.2,3.6), 
-             n = 4,
-             prior.mu.theta = 2.3,
-             prior.sd.theta = 0.5,
-             prior.sd.min = 0,
-             prior.sd.max = 100)
-
-# Set up and run jags
-
-model <- jags.model(textConnection(modelstring), 
-                    data = data, 
-                    n.chains = 3)
-
-output <- coda.samples(model = model,
-                       variable.names = c("theta","sd"), 
-                       n.iter = 1000)
-
-plot(output, smooth = FALSE)
-
-gelman.plot(output)
-
-gelman.diag(output)
-
-summary(output)
-
-```
 
 
 

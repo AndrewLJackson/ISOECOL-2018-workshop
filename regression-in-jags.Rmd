@@ -42,6 +42,10 @@ model {
   # Define the Likelihood
   for(i in 1:N) { 
     y[i] ~ dnorm(alpha + beta*x[i], sigma^-2) 
+    
+    # residuals
+    y_pred[i] ~ dnorm(alpha + beta*x[i], sigma^-2) 
+    resid[i] <- y[i] - y_pred[i]
   }
 
   # -------------------------------------------
