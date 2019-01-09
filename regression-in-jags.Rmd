@@ -70,8 +70,7 @@ model <- jags.model(textConnection(modelstring),
 # evaluate the model
 output <- coda.samples(model = model,
                        variable.names = c("alpha", 
-                                          "beta",
-                                          "sigma"),
+                                          "beta"),
                        n.iter = 10000)
 ```
 
@@ -79,7 +78,7 @@ output <- coda.samples(model = model,
 
 - check the model output for consistency with a linear model fitting using glm() and satisfy yourself that the slope and intercept are comparable. 
 - Check for convergence.
-- Explore the correlation between the slope and intercept. Would you a priori expec them to be correlated in some way? The best way to do this is to plot the posterior draws for the slope against the intercept, and run a correlation test using `cor.test()` on the two vectors.
+- Explore the correlation between the slope and intercept. Would you a priori expect them to be correlated in some way? The best way to do this is to plot the posterior draws for the slope against the intercept, and run a correlation test using `cor.test()` on the two vectors.
 - We estimated the residual error term `sd` but we didnt monitor it. Edit the code so we can obtain the posterior samples for this parameter too.
 
 A key goal of regression modelling is to determine whether our esimate of the slope differs from zero. In frequentist statistics this would entail calculating a p-value which would tell us how likely the observed slope is given a null model where there is no true relationship between the two variables. In Bayesian statistics we can ask more directly what is the probabiliy that our posterior estimate of the slope does or does not contain zero. In the first instance, we can simply calculate some credible intervals of the estimated slope, and look to see if these cross zero or not. If say the 95% credible intervals do not contain zero, then there is a greater than 95% probability that our slope is different from zero.
@@ -107,17 +106,6 @@ print(p_beta_gt_zero)
 
 # plot the correlation between alpha and beta 
 # for chain 1
-
-plot.default(output[[1]][, "alpha"], 
-             output[[1]][, "beta"], 
-             cex = 0.7, 
-             col= 1, 
-             pch = 19)
-
-cor.test(output[[1]][, "alpha"], 
-             output[[1]][, "beta"])
-
-
 
 
 ```
