@@ -8,6 +8,8 @@ In preparation for the course please install the following, preferably in the be
 
 Remember you will need to bring your own personal computer for the duration of the course.
 
+**_NB_** the timetable is very much more than likely to change. I will be finalising on the train thursday morning, so I wont have a definitive plan until we meet at 14:00!
+
 ### Step 1
 
 Install the following using the corresponding links and *make sure you have the latest versions installed* and note that you have to install all three separately:
