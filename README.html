@@ -90,8 +90,14 @@ img {
 .tabbed-pane {
   padding-top: 12px;
 }
+.html-widget {
+  margin-bottom: 20px;
+}
 button.code-folding-btn:focus {
   outline: none;
+}
+summary {
+  display: list-item;
 }
 </style>
 
@@ -100,14 +106,74 @@ button.code-folding-btn:focus {
 <div class="container-fluid main-container">
 
 <!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
 </script>
 
 <!-- code folding -->
-
 
 
 
@@ -121,18 +187,17 @@ $(document).ready(function () {
 </div>
 
 
-<div id="isoecol-2018-workshop" class="section level1">
-<h1>ISOECOL-2018-workshop</h1>
-<p>Wi-fi: Congreso-Isotopos</p>
-<p>Pass: COngr3so-2k18</p>
-<p>This repository contains a collection of presentations and vignettes written in .*Rmarkdown format for my workshop on Bayesian Statistics for Ecologists running before ISOECOL 2018 in Vina del Mar, Chile on Saturday 28 July. Much of the content here was written by my collaborator and real statistician Andrew Parnell, University of Maynooth, Ireland.</p>
+<div id="iea-2019-bayesian-workshop" class="section level1">
+<h1>IEA-2019-Bayesian-workshop</h1>
+<p>This repository contains a collection of presentations and vignettes written in .*Rmarkdown format for my workshop on Bayesian Statistics for Ecologists which ran before ISOECOL 2018 in Vina del Mar, Chile on Saturday 28 July. Much of the content here was written by my collaborator and real statistician Prof. Andrew Parnell, University of Maynooth, Ireland.</p>
+<p>While the ISOECOL workshops was a full day, we obviously only have a half day and so will move quickly through some content, and not complete all the practical sessions. But I am giving you all the material so that you can work through it yourself.</p>
 <p>In preparation for the course please install the following, preferably in the below suggested order. Make sure you run these before you arrive in case of poor (or crowded!) internet.</p>
 <p>Remember you will need to bring your own personal computer for the duration of the course.</p>
 <div id="step-1" class="section level3">
 <h3>Step 1</h3>
-<p>Install the following using the corresponding links and <em>make sure you have the latest versions installed</em>:</p>
+<p>Install the following using the corresponding links and <em>make sure you have the latest versions installed</em> and note that you have to install all three separately:</p>
 <ul>
-<li><p>R: <a href="http://www.r-project.org" class="uri">http://www.r-project.org</a></p></li>
+<li><p>R: <a href="http://www.r-project.org" class="uri">http://www.r-project.org</a> - at least verison 3.5.1</p></li>
 <li><p>Rstudio (optional but recommended): <a href="https://www.rstudio.com" class="uri">https://www.rstudio.com</a></p></li>
 <li><p>JAGS: <a href="http://sourceforge.net/projects/mcmc-jags/files/" class="uri">http://sourceforge.net/projects/mcmc-jags/files/</a></p></li>
 </ul>
@@ -140,26 +205,18 @@ $(document).ready(function () {
 <div id="step-2" class="section level3">
 <h3>Step 2</h3>
 <p>Now install all the packages required for the course by entering the following code in to R</p>
-<pre class="{r,eval=false}"><code>install.packages(c('rjags', 'compositions', 'devtools', 
-                   'tidyverse', 'vegan', 'ellipse', 
-                   'simmr', 'SIBER', 'MixSIAR'))
+<pre class="{r,eval=false}"><code>install.packages(c('rjags', 'devtools', 'tidyverse'))
 
-# our package `siar` is pretty out of date these days, 
-# but its useful for quick examples.
-# Unfortunately it no longer installs from CRAN and instead 
-# we have to build it from the raw source code from github.
-
-devtools::install_github(&quot;andrewljackson/siar&quot;) 
-
-# It is often worth checking from time to time that our packages
+# It is often worth checking from time to time that all your installed packages
 # are up to date.
 update.packages(ask = FALSE)
 </code></pre>
-<p>These will install the most up to date versions of the packages. Note that this might take a while as some of these are pretty big and complicated packages.</p>
+<p>These will install the most up to date versions of the packages. Note that this might take a while as some of these may be pretty big and complicated packages.</p>
 </div>
 <div id="step-3" class="section level3">
 <h3>Step 3</h3>
 <p>Finally if you would like to do some pre-course reading (recommended) there are some papers which can be accessed <a href="https://github.com/andrewcparnell/simms_course/tree/master/papers">here</a>.</p>
+<p>You should also be familiar with at least linear modelling in R and using R studio. My <a href="https://www.youtube.com/playlist?list=PLXXzyqr0tEhPRNDuEQ6wcvMcpAkGRjVqs">podcast series</a> contains follow-along videos and code to get you up to speed if you feel you need a refresher course or are new to this software.</p>
 </div>
 <div id="troubleshooting" class="section level3">
 <h3>Troubleshooting</h3>
@@ -173,9 +230,9 @@ assignInNamespace(&quot;version_info&quot;, c(devtools:::version_info,
               version_max = &quot;99.99.99&quot;, path = &quot;bin&quot;))), 
               &quot;devtools&quot;)</code></pre>
 <p>Then try the <code>install_github</code> command again.</p></li>
-<li>If you are on a Mac you might need to install X11 from <a href="http://www.xquartz.org" class="uri">http://www.xquartz.org</a>.</li>
+<li>If you are on a Mac you might need to install X11 from <a href="http://www.xquartz.org" class="uri">http://www.xquartz.org</a> but likely only if you are using an oldre version of OSX.</li>
 <li>You may get a pop up window be asking if you want ‘additional build tools’. Please select ‘yes’.</li>
-<li>If on a Mac you will likely need to install Xcode from the Mac App Store. This is a big download so make sure you download it before you get to the course.</li>
+<li>If on a Mac you will likely need to install command line tools (which is much smaller than the full Xtools which is available from the App Store). Instructions for installing can be found at <a href="http://osxdaily.com/2014/02/12/install-command-line-tools-mac-os-x/" class="uri">http://osxdaily.com/2014/02/12/install-command-line-tools-mac-os-x/</a></li>
 <li>If you get an error about package <code>stringi</code> try typing <code>install.packages('stringi',type='win.binary')</code> if on Windows or <code>install.packages('stringi',type='mac.binary')</code> if on Mac. Then re-run the commands above</li>
 <li><p>If you get some errors about <code>pandoc</code> when installing simmr leave out the <code>build_vignettes=TRUE</code> argument</p></li>
 </ul>
@@ -184,15 +241,13 @@ assignInNamespace(&quot;version_info&quot;, c(devtools:::version_info,
 <div id="timetable-proposed-and-likely-flexible" class="section level2">
 <h2>Timetable (proposed and likely flexible)</h2>
 <ul>
-<li>10:00 - 11:15 Introduction to Bayes Theorem and Bayesian Inference (intro_bayes.Rmd)</li>
-<li>11:15 - 11:30 Coffee &amp; tea</li>
-<li>11:30 - 12:30 Fitting our first Bayesian models (<em>combining-priors-and-likelihoods.Rmd</em> &amp; <em>first-jags.Rmd</em>)</li>
-<li>12:30 - 14:00 Lunch</li>
-<li>14:00 - 15:00 Building more complicated regression models (<em>regression-in-jags.Rmd</em> &amp; <em>basic-simm-jags.Rmd</em> &amp; if you are more comfortable or quicker at this you might move on to <em>glmm_in_jags.Rmd</em> which illustrates how to include a random effect)</li>
-<li>15:00 - 15:15 Coffee &amp; tea</li>
-<li>15:15 - 16:00 Reporting output from Bayesian models (more of a discussion session, but i suspect we will run over from the previous session and we can work together through some examples from mixing models or SIBER type analyeses as a class)</li>
+<li>14:00 - 14:45 Introduction to Bayes Theorem and Bayesian Inference (intro_bayes.Rmd)</li>
+<li>14:45 - 15:15 Combining priors and likelihoods (combining-priors-and-likelihoods.Rmd)</li>
+<li>15:15 - 15:30 Tea &amp; Coffee</li>
+<li>15:30 - 16:00 Intro to JAGS practical (first-jags.Rmd)</li>
+<li>16:00 - 16:30 Bayesian Linear Models (regression-in-jags.Rmd)</li>
+<li>16:30 - 17:00 Bayesian Hierarchical Models; also known as variance components modelling, random effects, and ultimately mixed effects models (glmm_in_jags.Rmd)</li>
 </ul>
-<p>We do not have a lot of power outlets so please try to manage the battery life on your laptops, and give priority to people whose batteries are not performing well. There will be a chance to top up battery power over lunch.</p>
 </div>
 </div>
 

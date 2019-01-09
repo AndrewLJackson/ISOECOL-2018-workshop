@@ -1,10 +1,8 @@
-# ISOECOL-2018-workshop
+# IEA-2019-Bayesian-workshop
 
-Wi-fi: Congreso-Isotopos
+This repository contains a collection of presentations and vignettes written in .*Rmarkdown format for my workshop on Bayesian Statistics for Ecologists which ran before ISOECOL 2018 in Vina del Mar, Chile on Saturday 28 July. Much of the content here was written by my collaborator and real statistician Prof. Andrew Parnell, University of Maynooth, Ireland.
 
-Pass: COngr3so-2k18
-
-This repository contains a collection of presentations and vignettes written in .*Rmarkdown format for my workshop on Bayesian Statistics for Ecologists running before ISOECOL 2018 in Vina del Mar, Chile on Saturday 28 July. Much of the content here was written by my collaborator and real statistician Andrew Parnell, University of Maynooth, Ireland.
+While the ISOECOL workshops was a full day, we obviously only have a half day and so will move quickly through some content, and not complete all the practical sessions. But I am giving you all the material so that you can work through it yourself.
 
 In preparation for the course please install the following, preferably in the below suggested order. Make sure you run these before you arrive in case of poor (or crowded!) internet.
 
@@ -12,9 +10,9 @@ Remember you will need to bring your own personal computer for the duration of t
 
 ### Step 1
 
-Install the following using the corresponding links and *make sure you have the latest versions installed*:
+Install the following using the corresponding links and *make sure you have the latest versions installed* and note that you have to install all three separately:
 
--	R: [http://www.r-project.org](http://www.r-project.org)
+-	R: [http://www.r-project.org](http://www.r-project.org) - at least verison 3.5.1
 
 -	Rstudio (optional but recommended): [https://www.rstudio.com](https://www.rstudio.com)
 
@@ -25,29 +23,22 @@ Install the following using the corresponding links and *make sure you have the 
 Now install all the packages required for the course by entering the following code in to R
 
 ```{r,eval=FALSE}
-install.packages(c('rjags', 'compositions', 'devtools', 
-                   'tidyverse', 'vegan', 'ellipse', 
-                   'simmr', 'SIBER', 'MixSIAR'))
+install.packages(c('rjags', 'devtools', 'tidyverse'))
 
-# our package `siar` is pretty out of date these days, 
-# but its useful for quick examples.
-# Unfortunately it no longer installs from CRAN and instead 
-# we have to build it from the raw source code from github.
-
-devtools::install_github("andrewljackson/siar") 
-
-# It is often worth checking from time to time that our packages
+# It is often worth checking from time to time that all your installed packages
 # are up to date.
 update.packages(ask = FALSE)
 
 ```
 
-These will install the most up to date versions of the packages. Note that this might take a while as some of these are pretty big and complicated packages.
+These will install the most up to date versions of the packages. Note that this might take a while as some of these may be pretty big and complicated packages.
 
  
 ### Step 3
  
 Finally if you would like to do some pre-course reading (recommended) there are some papers which can be accessed [here](https://github.com/andrewcparnell/simms_course/tree/master/papers).
+
+You should also be familiar with at least linear modelling in R and using R studio. My [podcast series](https://www.youtube.com/playlist?list=PLXXzyqr0tEhPRNDuEQ6wcvMcpAkGRjVqs) contains follow-along videos and code to get you up to speed if you feel you need a refresher course or are new to this software.
 
 
 ### Troubleshooting
@@ -65,9 +56,9 @@ assignInNamespace("version_info", c(devtools:::version_info,
 ```
   Then try the `install_github` command again.
   
-  - If you are on a Mac you might need to install X11 from [http://www.xquartz.org](http://www.xquartz.org). 
+  - If you are on a Mac you might need to install X11 from [http://www.xquartz.org](http://www.xquartz.org) but likely only if you are using an oldre version of OSX. 
   - You may get a pop up window be asking if you want 'additional build tools'. Please select 'yes'. 
-  - If on a Mac you will likely need to install Xcode from the Mac App Store. This is a big download so make sure you download it before you get to the course.
+  - If on a Mac you will likely need to install command line tools (which is much smaller than the full Xtools which is available from the App Store). Instructions for installing can be found at http://osxdaily.com/2014/02/12/install-command-line-tools-mac-os-x/
   - If you get an error about package `stringi` try typing `install.packages('stringi',type='win.binary')` if on Windows or `install.packages('stringi',type='mac.binary')` if on Mac. Then re-run the commands above
   - If you get some errors about `pandoc` when installing simmr leave out the `build_vignettes=TRUE` argument
 
@@ -76,14 +67,10 @@ If you run into any other problems please drop me an email at  <a.jackson@tcd.ie
 
 ## Timetable (proposed and likely flexible)
 
-- 10:00 - 11:15 Introduction to Bayes Theorem and Bayesian Inference
+- 14:00 - 14:45 Introduction to Bayes Theorem and Bayesian Inference
 (intro_bayes.Rmd)
-- 11:15 - 11:30 Coffee & tea
-- 11:30 - 12:30 Fitting our first Bayesian models (*combining-priors-and-likelihoods.Rmd* & *first-jags.Rmd*)
-- 12:30 - 14:00 Lunch
-- 14:00 - 15:00 Building more complicated regression models (*regression-in-jags.Rmd* &  *basic-simm-jags.Rmd* & if you are more comfortable or quicker at this you might move on to *glmm_in_jags.Rmd* which illustrates how to include a random effect)
-- 15:00 - 15:15 Coffee & tea
-- 15:15 - 16:00 Reporting output from Bayesian models (more of a discussion session, but i suspect we will run over from the previous session and we can work together through some examples from mixing models or SIBER type analyeses as a class)
-
-We do not have a lot of power outlets so please try to manage the battery life on your laptops, and give priority to people whose batteries are not performing well. There will be a chance to top up battery power over lunch.
-
+- 14:45 - 15:15 Combining priors and likelihoods (combining-priors-and-likelihoods.Rmd)
+- 15:15 - 15:30 Tea & Coffee
+- 15:30 - 16:00 Intro to JAGS practical (first-jags.Rmd)
+- 16:00 - 16:30 Bayesian Linear Models (regression-in-jags.Rmd)
+- 16:30 - 17:00 Bayesian Hierarchical Models; also known as variance components modelling, random effects, and ultimately mixed effects models (glmm_in_jags.Rmd)
