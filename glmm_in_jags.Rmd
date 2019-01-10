@@ -14,15 +14,45 @@ library(rjags)
 # load lme4 only to access the dataset
 # We could just address it long hand via lme4::sleepstudy but im being lazy.
 library(lme4)
+
+library(ggplot2)
 ```
 
 
+## Sleepstudy dataset
+
 We will use the 'sleepstudy' dataset from the package `lme4` which matches the simple linear effects model with a random effect in the example for the general linear mixed effects fitting function `?lme4::lmer`.
 
-## A simple linear regression
+From the help file associated with `?sleepstudy`: The average reaction time per day for subjects in a sleep deprivation study. On day 0 the subjects had their normal amount of sleep. Starting that night they were restricted to 3 hours of sleep per night. The observations represent the average reaction time on a series of tests given each day to each subject.
+
+Ultimately we might fit a mixed effects model comprising a linear effect of the variable `Days` on the average `Reaction` time, with a random effect for each `Subject` but we will build toward this gradually. While it might be tempting to start with a linear regression and add in the random effect afterwards, I think it is conceptually easier to understand the random effect if we start by building a variance components model which is essentially a hierarchical model with a grand mean and a set of nested variances. We can then easily add in the linear part afterwards.
+
+But first... lets build the basic model that is just a single grand mean and a single error term. We might call this our Null Model since it really is as simple as we can get and if we cant improve on this model then we cant really say anything about what is affecting reaction times other than it has a number and everyone varies around that number randomly.
+
+## A null model
+
+This model basically comprises a mean and a standard deviation and so we could visualise our data *a priori* as either a histogram, or as a boxplot, or as an errorbar plot.
+
+```{r visualise-null}
+# create a histogram of the Reacion time data, and add some extra
+# white space above to allow us add an error bar plot to represent the 
+# mean and standard deviation.
+hist(sleepstudy$Reaction, breaks = 10, ylim = c(0, 35))
+
+# add a point and text for the mean
+mu <- mean(sleepstudy$Reaction)
+points(mu, 30, pch = 20)
+text(mu, 33, labels = round(mu))
+
+# add a horizontal line for the +/- sd
+ss <- sd(sleepstudy$Reaction)
+lines(c(mu - ss, mu + ss), c(30, 30), col = "black")
+
+```
+
 
 First we define our model as a string for JAGS.
-```{r}
+```{r define-null-model}
 
 # Define our model
 modelstring <- '
@@ -31,13 +61,18 @@ modelstring <- '
     for (i in 1:N){
 
       Y[i] ~ dnorm(mu[i], tau)
-      mu[i] <- b0 + b1 * X[i]
+      mu[i] <- b0
 
     }
     
-    # Prior
+    # ---------------------------------------
+    # Priors
+
+    # prior on the intercept / grand mean
     b0 ~ dnorm(0, 100 ^ -2)
-    b1 ~ dnorm(0, 100 ^ -2)
+
+    # prior on the standard deviation of the error term
+    # which is then converted to precision.
     sigma ~ dunif(0, 100)
     tau <- 1 / (sigma ^ 2) 
   }
@@ -47,38 +82,161 @@ modelstring <- '
 
 Now we need to bundle up our data and pass it to rjags for fitting.
 
-```{r run-lm}
+```{r run-null-model}
 
 # Set up data
-data = list( N = nrow(sleepstudy), 
-             X =  sleepstudy$Days,
+data = list( N = nrow(sleepstudy),
              Y = sleepstudy$Reaction)
 
+# open a text connection for our modelstring. This has the effect of 
+# creating a file that doesnt exist on our drives as we consider a *.txt file 
+# to exist, but essentially the computer then treats them the same.
+model_connection <- textConnection(modelstring)
+
 # Run jags
-model <- jags.model(textConnection(modelstring), data = data, 
-                 n.chains = 3)
+model <- jags.model(model_connection, data = data, 
+                 n.chains = 3, quiet = TRUE)
+
+# we should then close our text connection that we made
+close(model_connection)
 
 output <- coda.samples(model=model,
-                    variable.names=c("b0", "b1", "sigma"), 
+                    variable.names=c("b0", "sigma"), 
                     n.iter = 5000,
-                    thin = )
+                    thin = 5)
 
 ```
 
-```{r plot-bayes-lm}
-# Plot output
-plot(output)
+**_Tasks:_** check that the predictions from our Bayesian model match the simple maximum likelihood calculations of the mean and standard deviation of the reaction times.
+
+## Variance Components model - adding the random effect
+
+We may well recognise that there is variation both within and among individual Subjects. For one, identifying where the majority of this variation is would be of interest in terms of directing future efforts either to finding explanatory variables within or among individuals. From a statistical perspective, it is vital to control for this variation when testing among individual effects, as otherwise our calculations of power and hence effect size and significance can be (very far) off.
+
+### Visualise variation within and among subjects
+
+```{r visualise-variation}
+
+# create a boxplot of the Reaction time data broken down by Subject.
+# Add horizontal lines for teh grand mean (mu) and grand standard deviation (ss)
+# which we created earlier in our first plot of the null model.
+g1 <- ggplot(sleepstudy, aes(x = Subject, y = Reaction)) + 
+  geom_boxplot() + 
+  geom_abline(mapping = aes(intercept = mu, slope = 0), col = "red") + 
+  geom_abline(mapping = aes(intercept = mu - ss, slope = 0), 
+              col = "red", linetype = 2) + 
+  geom_abline(mapping = aes(intercept = mu + ss, slope = 0), 
+              col = "red", linetype = 2)
+
+# print this figure to screen
+print(g1)
 
 ```
+Clearly there is considerable variation within subjects, with some individuals being very much lower than the overall mean, and others much higher. There appears at least by eye, for there to be more variation among individuals than within, where reaction times by individual seem to be reasonably consistent with a few exceptions. Bear in mind there is additional data in the form of a linear effect variable of the experimentally manipulated amount of sleep each subject received prior to testing, and this may help further explain the variation we observe.
 
 
-## Adding the random effect
+### Build our hierarchical model of variances
 
 The random effect in this example is by *Subject*, with multiple observations made on the same subject. In this simple random intercept model, we want to allow individuals to differ from their expected value (the intercept) by a (hopefully relatively) small deviation. The mean of each individuals' deviations will be described by a normal distribution, and by a variable $U[j]$ for the jth individual described by $U_j \sim N(0, \sigma^2_U)$.
 
 We define a new jags model
 
 ```{r random-jags}
+# Define our model
+modelstring <- '
+  model {
+    # Likelihood
+    for (i in 1:N){
+
+      Y[i] ~ dnorm(mu[i], tau)
+
+      # The code U[Subject[i]] looks up the subject identifier for the ith 
+      # individual and extracts the corresponding deviation from U which 
+      # is defined after the loop over i.
+      mu[i] <- b0 + U[Subject[i]]
+
+    }
+
+    # random parts
+    #
+    # Pull out the random deviations for the variable U, one for each 
+    # subject
+    for (j in 1:S){
+      U[j] ~ dnorm(0, tau_U)
+    }
+
+    # we can if we want calcluate the total variance, which is the simple 
+    # sum of variances. We would need to monitor this variable if we want to 
+    # see it. Remember: while variances are additive, neither 
+    # standard deviations nor precisions are.
+    var_tot <- (sigma_U ^ 2) + (sigma ^ 2)
+    
+    # ------------------------------------------
+    # Priors
+    
+    # prior on the grand mean b0 (same as the intercept)
+    b0 ~ dnorm(0, 100 ^ -2)
+    
+    # prior on the residual error termn
+    sigma ~ dunif(0, 100)
+    tau <- 1 / (sigma ^ 2) 
+
+    # prior on the Subject level error term
+    sigma_U ~ dunif(0, 100)
+    tau_U <- 1 / (sigma_U ^ 2)
+    # ------------------------------------------
+  }
+'
+
+```
+
+Now pass on the additional data which is $S$ the number of subjects in the dataset, and $Subject$ which is the column Subject in the dataset. 
+
+### This step is really important in this example
+The only thing we need to do is convert this factor labelled column which starts at subject 308 and runs to 372, into a sequence starting at 1 and running to 18: this is acheived easily by using `as.numeric(sleepstudy$Subject)`.
+
+```{r fit-random}
+# Set up data
+data <- list( N = nrow(sleepstudy), 
+              S = length(levels(sleepstudy$Subject)),
+              Subject = as.numeric(sleepstudy$Subject),
+              Y = sleepstudy$Reaction)
+
+# open a text connection for our modelstring.
+model_connection <- textConnection(modelstring)
+
+# Run jags
+model <- jags.model(model_connection, data = data, 
+                 n.chains = 3, quiet = TRUE)
+
+# we should then close our text connection that we made
+close(model_connection)
+
+output <- coda.samples(model=model,
+                    variable.names=c("b0", "sigma", "sigma_U"), 
+                    n.iter = 5000,
+                    thin = 5)
+
+
+```
+
+And plot the output
+```{r plot-random}
+# Plot output
+plot(output)
+
+```
+
+**_Tasks:_** We could if we wanted, monitor the variable `U` which is calculated in the jags model we specified. This would give us the subject level effects around the intercept (which in this type of model is the global mean). If we do this, what additional information do we now get in the `output` object? What might we do to condense this information and make sense of it?
+
+
+## Adding the linear effect
+
+Adding a linear effect of `Days` of sleep deprivation now creates what many might call a mixed effects model. Really we are just extending our model within the framework of General Linear Models and personally I find much of the nomenclature around specific subsets of models to be unhelful (and I include variance components in this).
+
+We define a new jags model that adds a linear effect of `Days`: $b_1 * \text{Days}$ and we remember to specify a prior for this unknown parameter $b_1$.
+
+```{r random-intercepts-jags}
 # Define our model
 modelstring <- '
   model {
@@ -102,23 +260,31 @@ modelstring <- '
       U[j] ~ dnorm(0, tau_U)
     }
     
-    # Prior
+    # ------------------------------------------
+    # Priors
+    
+    # prior on the grand mean b0 (same as the intercept)
     b0 ~ dnorm(0, 100 ^ -2)
+
+    # prior on the slope of the effect of Days
     b1 ~ dnorm(0, 100 ^ -2)
     
+    # prior on the residual error termn
     sigma ~ dunif(0, 100)
     tau <- 1 / (sigma ^ 2) 
 
+    # prior on the Subject level error term
     sigma_U ~ dunif(0, 100)
     tau_U <- 1 / (sigma_U ^ 2)
+    # ------------------------------------------
   }
 '
 
 ```
 
-Now pass on the additional data which is $S$ the number of subjects in the dataset, and $Subject$ which is the column Subject in the dataset. The only thing we need to do is convert this factor labelled column which starts at subject 308 and runs to 372, into a sequence starting at 1 and running to 18: this is acheived easily by using `as.numeric(sleepstudy$Subject)`.
 
-```{r fit-random, fig.height=15}
+
+```{r fit-random-intercepts}
 # Set up data
 data <- list( N = nrow(sleepstudy), 
               S = length(levels(sleepstudy$Subject)),
@@ -126,24 +292,155 @@ data <- list( N = nrow(sleepstudy),
               X =  sleepstudy$Days,
               Y = sleepstudy$Reaction)
 
+# open a text connection for our modelstring.
+model_connection <- textConnection(modelstring)
+
 # Run jags
-model <- jags.model(textConnection(modelstring), data = data, 
-                 n.chains = 3)
+model <- jags.model(model_connection, data = data, 
+                 n.chains = 3, quiet = TRUE)
+
+# we should then close our text connection that we made
+close(model_connection)
 
 output <- coda.samples(model=model,
                     variable.names=c("b0", "b1", "sigma", "sigma_U"), 
                     n.iter = 5000,
-                    thin = )
+                    thin = 5)
+
+
+```
+
+And plot and explore the output
+```{r plot-random-intercepts, fig.height = 10}
+
+# summaries of the posteriors
+summary(output)
+
+# Plot output
+plot(output)
+
+```
+
+## Further extending this to random slopes
+
+The model above is technically a random intercept model since only the intercepts for each Subject vary and each individual subject shares the same overall effect of days of sleep deprivation on their reaction time. Since we can build any model we like in the Bayesian framework we can reasonably easily extend our model to allow both random intercepts and random slopes by individual.
+
+### Visually this might look like this:
+
+```{r visualise-random-slopes}
+
+# plot Reaction time by Days of sleep deprivation and colour by Subject.
+# use geom_smooth() to add linear estimates for each subject, and 
+# suppress the error bars else the plot gets confusing
+g3 <- ggplot(sleepstudy, aes(x = Days, y = Reaction, col = Subject)) + 
+  geom_point() + 
+  geom_smooth(method = lm, se = FALSE)
+
+# print this figure to screen
+print(g3)
+
+```
+### Build and fit our random slopes model
+
+**_Task:_** Before we start coding; how many slopes do we need to esimate? i.e. how many js in $b_{1}[j]$ do we need? 
+
+Since we will be drawing our $b_1$s from a normal distribution as we did for the intercepts, we will need to specify a prior for both the mean and the variance for this distribution.
+
+We therefore now have three random terms: residual error, error among the subjects' intercepts and error among the subjects' response to sleep deprivation.
+
+```{r random-slopes-jags}
+# Define our model
+modelstring <- '
+  model {
+    # Likelihood
+    for (i in 1:N){
+
+      Y[i] ~ dnorm(mu[i], tau)
+
+      # The code U[Subject[i]] looks up the subject identifier for the ith 
+      # individual and extracts the corresponding deviation from U which 
+      # is defined after the loop over i.
+      mu[i] <- b0 + b1[Subject[i]] * X[i] + U[Subject[i]]
+
+    }
+
+    # random parts
+    #
+    # Pull out the random deviations for the variable U, one for each 
+    # subject.
+    # We can also draw the slopes for our individual subjects
+    for (j in 1:S){
+      U[j] ~ dnorm(0, tau_U)
+      b1[j] ~ dnorm(mu_b1, tau_b1)
+    }
+
+    
+    # ------------------------------------------
+    # Priors
+    
+    # prior on the grand mean b0 (same as the intercept)
+    b0 ~ dnorm(0, 100 ^ -2)
+
+    # prior on the mean and variabnce of slope of the effect of Days
+    mu_b1 ~ dnorm(0, 100 ^ -2)
+    sigma_b1 ~ dunif(0, 100)
+    tau_b1 <- 2 / (sigma_b1 ^ 2)
+    
+    # prior on the residual error termn
+    sigma ~ dunif(0, 100)
+    tau <- 1 / (sigma ^ 2) 
+
+    # prior on the Subject level error term
+    sigma_U ~ dunif(0, 100)
+    tau_U <- 1 / (sigma_U ^ 2)
+    # ------------------------------------------
+  }
+'
+
+```
+
+
+
+```{r fit-random-slopes}
+# Set up data
+data <- list( N = nrow(sleepstudy), 
+              S = length(levels(sleepstudy$Subject)),
+              Subject = as.numeric(sleepstudy$Subject),
+              X =  sleepstudy$Days,
+              Y = sleepstudy$Reaction)
+
+# open a text connection for our modelstring.
+model_connection <- textConnection(modelstring)
+
+# Run jags
+model <- jags.model(model_connection, data = data, 
+                 n.chains = 3, quiet = TRUE)
+
+# we should then close our text connection that we made
+close(model_connection)
+
+output <- coda.samples(model=model,
+                    variable.names=c("b0", "mu_b1", "sigma_b1", 
+                                     "sigma", "sigma_U"), 
+                    n.iter = 5000,
+                    thin = 5)
 
 
 ```
 
 And plot the output
-```{r plot-random}
+```{r plot-random-slopes}
+
+# summaries of the posteriors
+summary(output)
+
 # Plot output
 plot(output)
 
 ```
+
+**_Tasks:_** as before, we might want to extract the actual slopes for each individual. What parameter would we add to monitor list to acheive this? Do these estimates match the visualisation of the data we made above?
+
 
 
 

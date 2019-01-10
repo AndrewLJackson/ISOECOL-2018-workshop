@@ -25,7 +25,7 @@ Install the following using the corresponding links and *make sure you have the 
 Now install all the packages required for the course by entering the following code in to R
 
 ```{r,eval=FALSE}
-install.packages(c('rjags', 'devtools', 'tidyverse'))
+install.packages(c('rjags', 'devtools', 'tidyverse', 'lme4'))
 
 # It is often worth checking from time to time that all your installed packages
 # are up to date.
