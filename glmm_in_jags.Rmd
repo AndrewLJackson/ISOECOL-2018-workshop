@@ -94,13 +94,13 @@ data = list( N = nrow(sleepstudy),
 model_connection <- textConnection(modelstring)
 
 # Run jags
-model <- jags.model(model_connection, data = data, 
+model_null <- jags.model(model_connection, data = data, 
                  n.chains = 3, quiet = TRUE)
 
 # we should then close our text connection that we made
 close(model_connection)
 
-output <- coda.samples(model=model,
+output <- coda.samples(model = model_null,
                     variable.names=c("b0", "sigma"), 
                     n.iter = 5000,
                     thin = 5)
@@ -206,13 +206,13 @@ data <- list( N = nrow(sleepstudy),
 model_connection <- textConnection(modelstring)
 
 # Run jags
-model <- jags.model(model_connection, data = data, 
+model_random <- jags.model(model_connection, data = data, 
                  n.chains = 3, quiet = TRUE)
 
 # we should then close our text connection that we made
 close(model_connection)
 
-output <- coda.samples(model=model,
+output <- coda.samples(model = model_random,
                     variable.names=c("b0", "sigma", "sigma_U"), 
                     n.iter = 5000,
                     thin = 5)
@@ -296,13 +296,13 @@ data <- list( N = nrow(sleepstudy),
 model_connection <- textConnection(modelstring)
 
 # Run jags
-model <- jags.model(model_connection, data = data, 
+model_rand_int <- jags.model(model_connection, data = data, 
                  n.chains = 3, quiet = TRUE)
 
 # we should then close our text connection that we made
 close(model_connection)
 
-output <- coda.samples(model=model,
+output <- coda.samples(model=model_rand_int,
                     variable.names=c("b0", "b1", "sigma", "sigma_U"), 
                     n.iter = 5000,
                     thin = 5)
@@ -311,7 +311,7 @@ output <- coda.samples(model=model,
 ```
 
 And plot and explore the output
-```{r plot-random-intercepts, fig.height = 10}
+```{r plot-random-intercepts}
 
 # summaries of the posteriors
 summary(output)
@@ -413,13 +413,13 @@ data <- list( N = nrow(sleepstudy),
 model_connection <- textConnection(modelstring)
 
 # Run jags
-model <- jags.model(model_connection, data = data, 
+model_rand_slopes <- jags.model(model_connection, data = data, 
                  n.chains = 3, quiet = TRUE)
 
 # we should then close our text connection that we made
 close(model_connection)
 
-output <- coda.samples(model=model,
+output <- coda.samples(model = model_rand_slopes,
                     variable.names=c("b0", "mu_b1", "sigma_b1", 
                                      "sigma", "sigma_U"), 
                     n.iter = 5000,
@@ -440,6 +440,29 @@ plot(output)
 ```
 
 **_Tasks:_** as before, we might want to extract the actual slopes for each individual. What parameter would we add to monitor list to acheive this? Do these estimates match the visualisation of the data we made above?
+
+## Comparing among models
+
+Bayesian models have DIC as an analogue to the maximum likelihood founded AIC scores, and they work in much the same way: lower scores indicate improved model fit balanced against the number of parameters involved. We can use `dic.samples()` to quickly caluclate these scores for our four models. Just bear in mind that as with frequentist or maximum likelihood approaches, calculation of the number of parameters in random effects models can be complicated, and in many instances `dic.samples()` may not run or be reliable.
+
+I have opted for just 1000 samples on which to calculate DIC, but you may want to increase this.
+
+
+```{r dic-comparison}
+
+# first the null model
+dic.samples(model_null)
+
+# then our two level random effects model
+dic.samples(model_random)
+
+# now you can do the same here for the random intercept an random slopes models.
+
+```
+
+
+**_Task:_** modify the R chunk above and use DIC of the four models to decide whic model is most appropriate to the data.
+
 
 
 
