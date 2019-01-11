@@ -451,10 +451,10 @@ I have opted for just 1000 samples on which to calculate DIC, but you may want t
 ```{r dic-comparison}
 
 # first the null model
-dic.samples(model_null)
+dic.samples(model_null, n.iter = 1000)
 
 # then our two level random effects model
-dic.samples(model_random)
+dic.samples(model_random, n.iter = 1000)
 
 # now you can do the same here for the random intercept an random slopes models.
 
