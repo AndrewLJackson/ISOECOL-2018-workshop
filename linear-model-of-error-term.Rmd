@@ -1,0 +1,171 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Simulate and fit a model allowing linear effects on variance as well as mean. This example requires the `rjags` package which itself requires a separate installation of [JAGS](http://sourceforge.net/projects/mcmc-jags/files/). 
+
+```{r setup}
+
+# load the rjags library
+library(rjags)
+
+library(tidyverse)
+
+```
+
+Simulate the data
+
+```{r sim-data}
+
+# how many observations to simulate
+n.obs <- 100
+
+# intercept of the mean
+b0 <- 20
+
+# slope of the mean
+b1 <- 1.6
+
+# intercept of the standard deviation
+a0 <- 1
+
+# slope of the standard deviaion
+a1 <- 0.04
+
+# x is random between 0 and 100
+x <- runif(n.obs, 0, 50)
+
+# generate the y value mean determined by linear function of x with parameters 
+# b0 abd b1 and sd that is a function of x with parameters a0 and a1. 
+# Specifically the standard deviatoin is modelled as
+# exponential  linear effect to ensure positive values only.
+y <- rnorm(n.obs, 
+           mean = b0 + b1 * x, 
+           sd = exp(a0 + a1 * x) )
+
+df <- data.frame(x = x, y = y)
+
+# plot the raw data to check
+ggplot(df, aes(x = x, y = y)) + geom_point()
+
+```
+
+
+# Bayesian model to recover the parameters
+
+Define a JAGS model which in this case is identical to the model used to simulate the data: advantage of omniscience!
+
+```{r define-jags-model}
+
+modelstring ='
+model {
+
+  # Define the Likelihood
+  for(i in 1:N) { 
+
+    # calculate the mean for each y[i]
+    mu[i] <- b0 + b1 * x[i]
+
+    # and similar for the standard deviation
+    # which also needs to be converted to precision for JAGS.
+    sigma[i] <- exp(a0 + a1 * x[i])
+    tau[i] <- sigma[i] ^ -2
+
+    # and finally the likelihood of the data
+    y[i] ~ dnorm(mu[i], tau[i]) 
+    
+  }
+
+  # -------------------------------------------
+  # Prior distributions on our four parameters
+  # Note: vague priors
+  b0 ~ dnorm(0, 100^-2) 
+  b1 ~ dnorm(0, 100^-2)
+  a0 ~ dnorm(0, 100^-2)
+  a1 ~ dnorm(0, 100^-2)
+}
+'
+
+# open teh text connection to this string
+txtconn <- textConnection(modelstring)
+
+
+```
+
+Now we are ready to collect the data and pass it to the rjags fitting functions.
+
+```{r run-jags}
+
+# bundle the data into a list for passing to rjags
+data <- list(x = df$x,
+             y = df$y,
+             N = nrow(df))
+
+# set up the model
+model <- jags.model(textConnection(modelstring), 
+                    data= data, 
+                    n.chains = 3)
+
+# evaluate the model
+output <- coda.samples(model = model,
+                       variable.names = c("b0", "b1", "a0","a1"),
+                       n.iter = 2000)
+
+# tidy up and close the text connection
+close(txtconn)
+
+```
+
+# Plot the output
+
+Plot density plots of the esimates for each of our four parameters which are the slopes and intercepts for both the mean and the standard deviation.
+```{r dens-plots}
+plot(output, trace = FALSE, density = TRUE)
+```
+
+Plot trace plots to see how the algorithm has converged.
+
+```{r trace-plots}
+plot(output, trace = TRUE, density = FALSE)
+```
+
+And test for convergence using the Gelman-Rubin-Brooks diagnostic. As a rule of thumb, values under 1.1 are what we are looking for.
+
+```{r test-convergence}
+
+
+gelman.diag(output)
+gelman.plot(output)
+
+```
+
+
+# Summary of Model
+
+```{r jags-summary}
+
+# calculate summary statistics of the parameter estimates
+summ_output <- summary(output)
+
+# print to scrren
+print(summ_output)
+
+# compare with the values specified by turning into a data.frame 
+# and removing some unnecessary columns
+compare_coefs <- data.frame(summ_output$statistics[,1:2])
+compare_coefs$True_Mean <- c(a0, a1, b0, b1)
+compare_coefs$Diff_Mean <- compare_coefs$Mean - compare_coefs$True_Mean
+
+
+knitr::kable(compare_coefs, digits = 2)
+```
+
+## Interpreting the results
+
+Since `a1` in the code above controls the slope of the standard deviation with `x` on an exponential scale, then values different from 0 indicate heterscedacity. If we look at the summary table for the Quantiles, then 0 lies outside the 95% credible interval (i.e. between 2.5% and 97.5%) of a1.
+
+
+
+
+
